@@ -1,0 +1,1 @@
+python stream.py --config config.json
