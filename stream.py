@@ -5,12 +5,17 @@ from datetime import datetime, timedelta
 import time
 import argparse
 
+RTSP_FRAME_BUFFER_SIZE = 200000
+
 
 def start_record(stream_uri, outfile):
     """Record the network stream to the output file."""
 
-    sout_cmd = "file/ts:%s" % outfile
-    instance = vlc.Instance(["--sout", sout_cmd, "--no-audio"])
+    sout_cmd = "file/ts:{}".format(outfile)
+    rtsp_frame_buffer_size = "--rtsp-frame-buffer-size={}".format(
+        RTSP_FRAME_BUFFER_SIZE)
+    instance = vlc.Instance(
+        ["--sout", sout_cmd, "--no-audio", rtsp_frame_buffer_size])
     media = instance.media_new(stream_uri)
     player = instance.media_player_new()
     player.set_media(media)
@@ -91,14 +96,14 @@ def generate_outfile(stream_name, save_path):
     # Filename template
     fn = [timestamp.strftime('%Y%m%d_%H%M%S'), stream_name.replace(' ', '_')]
 
-    fn_str = '_'.join(fn)
-    name = '%s%s' % (fn_str, ext)
+    fn_str = "_".join(fn)
+    name = "{}{}".format(fn_str, ext)
     n = 0
 
     # While a filename matches the standard naming pattern, increment the
     # counter until we find a spare filename
     while name in d:
-        name = '%s_%d%s' % (fn_str, n, ext)
+        name = "{}_{}{}".format(fn_str, n, ext)
         n += 1
 
     return os.path.join(save_path, name)
@@ -107,8 +112,8 @@ def generate_outfile(stream_name, save_path):
 def print_log(text, log_file):
     """Print to the log and print to the screen with a datetime prefix."""
     now = datetime.now()
-    text = "%s %s" % (now, text)
-    print text
+    text = "{} {}".format(now, text)
+    print(text)
     with open(log_file, "a") as f:
         f.write(text + "\n")
 
@@ -116,6 +121,9 @@ def print_log(text, log_file):
 def main(args):
     fn = args["config"]
     stream_list, schedule_template, save_path = load_configuration(fn)
+    if save_path and not os.path.isdir(save_path):
+        os.makedirs(save_path)
+
     log_file = os.path.join(save_path, "stream.log")
     schedules = create_schedule(schedule_template)
     records = initialize_records(stream_list, schedules)
@@ -123,11 +131,13 @@ def main(args):
 
     while len(records) > 0 or len(handling_records) > 0:
         now = datetime.now()
-        rs = records.keys()
+        rs = list(records)
         for r in rs:
             data = records[r]
             if data["start"] < now < data["end"]:
-                print_log("[INFO] started recording: %s." %data["name"], log_file)
+                start_text = "[INFO] started recording: {}.".format(
+                    data["name"])
+                print_log(start_text, log_file)
                 outfile = generate_outfile(data["name"], save_path)
                 instance, player, media = start_record(data["uri"], outfile)
                 data["instance"] = instance
@@ -140,11 +150,13 @@ def main(args):
         for hr in hrs:
             data = handling_records[hr]
             if now > data["end"]:
-                print_log("[INFO] finished recording: %s." %data["name"], log_file)
+                end_text = "[INFO] finished recording: {}.".format(
+                    data["name"])
+                print_log(end_text, log_file)
                 stop_record(data["instance"], data["player"], data["media"])
                 handling_records.pop(hr)
 
-        time.sleep(10)
+        time.sleep(20)
 
     print_log("[INFO] no schedule, exited.", log_file)
 

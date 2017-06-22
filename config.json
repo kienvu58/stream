@@ -1,19 +1,15 @@
 {
-  "save_path": "D:/output/",
+  "save_path": "D:/CameraData/RD320/",
   "stream_list": [
     {
-      "name": "camera_one",
-      "uri": "http://8co1.vp9.tv/chn/CADD2/v.m3u8"
-    },
-    {
-      "name": "camera_two",
-      "uri": "http://8co1.vp9.tv/chn/CADD4/v.m3u8"
+      "name": "RD320",
+      "uri": "rtsp://192.168.1.10/user=admin&password=&channel=1&stream=0.sdp?"
     }
   ],
   "schedule_template": {
     "start": "06:00:00",
-    "end": "23:00:00",
-    "duration": 5,
+    "end": "17:00:00",
+    "duration": 10,
     "break": 5
   }
 }
