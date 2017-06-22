@@ -166,7 +166,7 @@ def main(args):
                 handling_records[r] = data
                 records.pop(r)
 
-        hrs = handling_records.keys()
+        hrs = list(handling_records)
         for hr in hrs:
             data = handling_records[hr]
             if now > data["end"]:
