@@ -178,7 +178,7 @@ def main(args):
 
         time.sleep(30)
 
-    print_log("[INFO] no schedule, exited.", log_file)
+    # print_log("[INFO] no schedule, exited.", log_file)
 
 
 if __name__ == "__main__":
@@ -189,3 +189,4 @@ if __name__ == "__main__":
                     action="store_true", help="Using template")
     while True:
         main(vars(ap.parse_args()))
+        sleep(3600*14)
