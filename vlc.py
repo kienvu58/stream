@@ -178,7 +178,8 @@ def find_lib():
     return (dll, plugin_path)
 
 # plugin_path used on win32 and MacOS in override.py
-dll, plugin_path  = find_lib()
+dll, plugin_path = find_lib()
+
 
 class VLCException(Exception):
     """Exception raised by libvlc methods.
@@ -188,7 +189,7 @@ class VLCException(Exception):
 try:
     _Ints = (int, long)
 except NameError:  # no long in Python 3+
-    _Ints =  int
+    _Ints = int
 _Seqs = (list, tuple)
 
 # Used for handling *event_manager() methods.

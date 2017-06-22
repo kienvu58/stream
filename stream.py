@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import time
 import argparse
 
-RTSP_FRAME_BUFFER_SIZE = 200000
+RTSP_FRAME_BUFFER_SIZE = 400000
 
 
 def start_record(stream_uri, outfile):
@@ -35,7 +35,8 @@ def load_configuration(fn):
     with open(fn, 'r') as f:
         data = json.load(f)
 
-    return data["stream_list"], data["schedule_template"], data["save_path"]
+    return (data["stream_list"], data["schedule_dict"],
+            data["schedule_template"], data["save_path"])
 
 
 class Schedule:
@@ -44,7 +45,19 @@ class Schedule:
         self.end = end
 
 
-def create_schedule(template):
+def import_schedules(schedule_dict):
+    schedules = []
+    for sch in schedule_dict:
+        now = datetime.now()
+        start_time = datetime.strptime(sch["start"], "%H:%M:%S")\
+            .replace(year=now.year, month=now.month, day=now.day)
+        end_time = datetime.strptime(sch["end"], "%H:%M:%S")\
+            .replace(year=now.year, month=now.month, day=now.day)
+        schedules.append(Schedule(start_time, end_time))
+    return schedules
+
+
+def create_schedules_from_template(template):
     """Generate a recording schedule from given template."""
     schedules = []
     now = datetime.now()
@@ -52,6 +65,7 @@ def create_schedule(template):
         .replace(year=now.year, month=now.month, day=now.day)
     end_time = datetime.strptime(template["end"], "%H:%M:%S")\
         .replace(year=now.year, month=now.month, day=now.day)
+
     duration = timedelta(minutes=template["duration"])
     break_time = timedelta(minutes=template["break"])
 
@@ -120,12 +134,18 @@ def print_log(text, log_file):
 
 def main(args):
     fn = args["config"]
-    stream_list, schedule_template, save_path = load_configuration(fn)
+    stream_list, schedule_dict, \
+        schedule_template, save_path = load_configuration(fn)
     if save_path and not os.path.isdir(save_path):
         os.makedirs(save_path)
 
     log_file = os.path.join(save_path, "stream.log")
-    schedules = create_schedule(schedule_template)
+
+    if args["template"]:
+        schedules = create_schedules_from_template(schedule_template)
+    else:
+        schedules = import_schedules(schedule_dict)
+
     records = initialize_records(stream_list, schedules)
     handling_records = {}
 
@@ -156,7 +176,7 @@ def main(args):
                 stop_record(data["instance"], data["player"], data["media"])
                 handling_records.pop(hr)
 
-        time.sleep(20)
+        time.sleep(30)
 
     print_log("[INFO] no schedule, exited.", log_file)
 
@@ -165,4 +185,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-c", "--config", type=str,
                     help="path to config file")
-    main(vars(ap.parse_args()))
+    ap.add_argument("-t", "--template", dest="template",
+                    action="store_true", help="Using template")
+    while True:
+        main(vars(ap.parse_args()))

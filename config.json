@@ -6,10 +6,16 @@
       "uri": "rtsp://192.168.1.10/user=admin&password=&channel=1&stream=0.sdp?"
     }
   ],
+  "schedule_dict": [
+    {
+      "start": "08:30:00",
+      "end": "17:30:00"
+    }
+  ],
   "schedule_template": {
-    "start": "06:00:00",
-    "end": "17:00:00",
-    "duration": 10,
-    "break": 5
+    "start": "08:30:00",
+    "end": "17:30:00",
+    "duration": 30,
+    "break": 15
   }
 }
